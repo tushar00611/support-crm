@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ticket Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <nav class="bg-blue-700 text-white px-6 py-4 flex justify-between items-center">
+    <h1 class="text-xl font-bold">🎫 Support CRM</h1>
+    <a href="index.html" class="bg-white text-blue-700 px-4 py-2 rounded font-bold">← Back</a>
+  </nav>
+  <div class="max-w-4xl mx-auto p-6">
+    <div id="loading" class="text-center py-12 text-gray-400">Loading...</div>
+    <div id="content" class="hidden">
+      <div class="flex items-center gap-3 mb-2">
+        <span id="tid" class="text-blue-600 font-bold text-lg"></span>
+        <span id="sbadge"></span>
+      </div>
+      <h2 id="tsubj" class="text-2xl font-bold mb-6"></h2>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2 space-y-4">
+          <div class="bg-white rounded shadow p-5">
+            <h3 class="font-bold text-gray-500 text-xs uppercase mb-3">Customer Info</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-400">Name</span>
+                <span id="cn" class="font-medium"></span>
+              </div>
+              <div class="flex justify-between border-b pb-2">
+                <span class="text-gray-400">Email</span>
+                <span id="ce" class="font-medium text-blue-600"></span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-400">Created</span>
+                <span id="cc" class="font-medium"></span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded shadow p-5">
+            <h3 class="font-bold text-gray-500 text-xs uppercase mb-3">Description</h3>
+            <p id="cdesc" class="text-gray-700 text-sm leading-relaxed"></p>
+          </div>
+          <div class="bg-white rounded shadow p-5">
+            <h3 class="font-bold text-gray-500 text-xs uppercase mb-3">Notes</h3>
+            <div id="notes"></div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="bg-white rounded shadow p-5">
+            <h3 class="font-bold text-gray-500 text-xs uppercase mb-3">Update</h3>
+            <label class="block text-sm font-semibold text-gray-600 mb-1">Status</label>
+            <select id="ns" class="w-full border rounded px-3 py-2 mb-3">
+              <option>Open</option>
+              <option>In Progress</option>
+              <option>Closed</option>
+            </select>
+            <label class="block text-sm font-semibold text-gray-600 mb-1">Note</label>
+            <textarea id="nn" rows="3" placeholder="Add note..."
+              class="w-full border rounded px-3 py-2 mb-3 text-sm"></textarea>
+            <div id="umsg" class="text-green-600 text-sm mb-2 hidden">Updated!</div>
+            <button onclick="upd()"
+              class="w-full bg-blue-600 text-white py-2 rounded font-bold hover:bg-blue-700">
+              Save
+            </button>
+          </div>
+          <div class="bg-white rounded shadow p-5 space-y-2">
+            <button onclick="cls()"
+              class="w-full border border-green-400 text-green-600 py-2 rounded font-bold hover:bg-green-50 text-sm">
+              Close Ticket
+            </button>
+            <button onclick="del()"
+              class="w-full border border-red-300 text-red-500 py-2 rounded font-bold hover:bg-red-50 text-sm">
+              Delete Ticket
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const API="http://localhost:8000";
+    const id=new URLSearchParams(window.location.search).get("id");
+    function badge(s){
+      if(s==="Open") return '<span class="bg-red-100 text-red-600 px-2 py-1 rounded-full text-xs font-bold">Open</span>';
+      if(s==="In Progress") return '<span class="bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full text-xs font-bold">In Progress</span>';
+      return '<span class="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-bold">Closed</span>';
+    }
+    async function load(){
+      try{
+        const r=await fetch(`${API}/api/tickets/${id}`);
+        const t=await r.json();
+        document.getElementById("loading").classList.add("hidden");
+        document.getElementById("content").classList.remove("hidden");
+        document.getElementById("tid").textContent=t.ticket_id;
+        document.getElementById("sbadge").innerHTML=badge(t.status);
+        document.getElementById("tsubj").textContent=t.subject;
+        document.getElementById("cn").textContent=t.customer_name;
+        document.getElementById("ce").textContent=t.customer_email;
+        document.getElementById("cc").textContent=new Date(t.created_at).toLocaleString();
+        document.getElementById("cdesc").textContent=t.description;
+        document.getElementById("ns").value=t.status;
+        const nl=document.getElementById("notes");
+        nl.innerHTML=t.notes&&t.notes.length>0
+          ? t.notes.map(n=>`<div class="bg-gray-50 border-l-4 border-blue-400 rounded p-3 mb-2">
+              <p class="text-sm">${n.note_text}</p>
+              <p class="text-xs text-gray-400 mt-1">${new Date(n.created_at).toLocaleString()}</p>
+            </div>`).join("")
+          : '<p class="text-gray-400 text-sm">No notes yet.</p>';
+      }catch(e){
+        document.getElementById("loading").textContent="Error loading ticket!";
+      }
+    }
+    async function upd(){
+      const s=document.getElementById("ns").value;
+      const n=document.getElementById("nn").value.trim();
+      await fetch(`${API}/api/tickets/${id}`,{
+        method:"PUT",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({status:s,note:n})
+      });
+      document.getElementById("umsg").classList.remove("hidden");
+      document.getElementById("nn").value="";
+      setTimeout(()=>document.getElementById("umsg").classList.add("hidden"),3000);
+      load();
+    }
+    async function cls(){
+      if(confirm("Close ticket?")){
+        await fetch(`${API}/api/tickets/${id}`,{
+          method:"PUT",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({status:"Closed",note:"Ticket closed."})
+        });
+        load();
+      }
+    }
+    async function del(){
+      if(confirm("Delete ticket?")){
+        await fetch(`${API}/api/tickets/${id}`,{method:"DELETE"});
+        window.location.href="index.html";
+      }
+    }
+    load();
+  </script>
+</body>
+</html>
