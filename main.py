@@ -1,7 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from database import init_db
 from routes.tickets import router as ticket_router
@@ -18,12 +17,12 @@ app.include_router(ticket_router, prefix="/api/tickets", tags=["tickets"])
 def home():
     return FileResponse("index.html")
 
-@app.get("/create")
+@app.get("/create.html")
 def create():
     return FileResponse("create.html")
 
-@app.get("/detail/{ticket_id}")
-def detail(ticket_id: str):
+@app.get("/detail.html")
+def detail():
     return FileResponse("detail.html")
 
 if __name__ == "__main__":
