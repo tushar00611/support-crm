@@ -18,7 +18,13 @@ app.include_router(ticket_router, prefix="/api/tickets", tags=["tickets"])
 def home():
     return FileResponse("index.html")
 
-app.mount("/static", StaticFiles(directory="."), name="static")
+@app.get("/create")
+def create():
+    return FileResponse("create.html")
+
+@app.get("/detail/{ticket_id}")
+def detail(ticket_id: str):
+    return FileResponse("detail.html")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
