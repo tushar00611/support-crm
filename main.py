@@ -17,6 +17,10 @@ app.include_router(ticket_router, prefix="/api/tickets", tags=["tickets"])
 def home():
     return FileResponse("index.html")
 
+@app.get("/index.html")
+def index():
+    return FileResponse("index.html")
+
 @app.get("/create.html")
 def create():
     return FileResponse("create.html")
