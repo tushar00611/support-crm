@@ -1,9 +1,6 @@
-%%writefile main.py
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from database import init_db
 from routes.tickets import router as ticket_router
 
@@ -28,11 +25,13 @@ app.include_router(
     tags=["tickets"]
 )
 
-app.mount("/static", StaticFiles(directory="."), name="static")
-
 @app.get("/")
-def home():
-    return FileResponse("index.html")
+def root():
+    return {
+        "message": "CRM API is running!",
+        "docs": "http://localhost:8000/docs"
+    }
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0",
+                port=8000, reload=True)
